@@ -62,6 +62,57 @@ const locations = [
     }
 ];
 
+// Create modal HTML structure
+const modal = document.createElement('div');
+modal.className = 'location-modal';
+modal.innerHTML = `
+    <div class="modal-content">
+        <img id="modal-image" src="" alt="Location Image">
+        <div id="modal-timer">5</div>
+    </div>
+`;
+document.body.appendChild(modal);
+
+// Add modal styles
+const style = document.createElement('style');
+style.textContent = `
+    .location-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+    }
+    .modal-content {
+        position: relative;
+        max-width: 800px;
+        margin: 50px auto;
+        text-align: center;
+    }
+    #modal-image {
+        max-width: 100%;
+        max-height: 80vh;
+    }
+    #modal-timer {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 10px;
+        border-radius: 50%;
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+`;
+document.head.appendChild(style);
+
 function initGame() {
     map = L.map('map').setView([0, 0], 2);
     
@@ -79,13 +130,31 @@ function initGame() {
     startRound();
 }
 
+function showLocationModal() {
+    const modalImg = document.getElementById('modal-image');
+    modalImg.src = actualLocation.image;
+    modal.style.display = 'block';
+    
+    let timeLeft = 5;
+    const timer = document.getElementById('modal-timer');
+    
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timer.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            modal.style.display = 'none';
+            document.getElementById('map').style.display = 'block';
+        }
+    }, 1000);
+}
+
 function startRound() {
     actualLocation = locations[round - 1];
     document.getElementById('round').textContent = round;
     
-    const imageElement = document.getElementById('location-image');
-    imageElement.style.backgroundImage = `url('${actualLocation.image}')`;
-    imageElement.style.display = 'block'; // Make sure the image container is visible
+    document.getElementById('map').style.display = 'none';
     
     const hintElement = document.getElementById('hint-text');
     if (hintElement && actualLocation.hints) {
@@ -93,10 +162,11 @@ function startRound() {
     }
     
     map.setView([0, 0], 2);
+    showLocationModal();
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
